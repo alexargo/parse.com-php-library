@@ -92,12 +92,12 @@ Library to use parse.com rest API.
  */
 
 
-class parseRestClient{
-	
+class ParseRestClient{
+
 	private $appid = '';
 	private $masterkey = '';
 	private $parseUrl = 'https://api.parse.com/1/classes/';
-
+	private $enableDebug = '';
 
 /**
  * When creating a new parseRestClient object
@@ -111,6 +111,10 @@ class parseRestClient{
 		}
 		else{
 			die('You must include your Application Id and Master Key');
+		}
+		
+		if(isset($config['enableDebug'])) {
+			$this->enableDebug = $config['enableDebug'];
 		}
 	}
 
@@ -129,7 +133,7 @@ class parseRestClient{
 		curl_setopt($c, CURLOPT_HTTPHEADER, array('Content-Type: application/json'));
 		curl_setopt($c, CURLOPT_CUSTOMREQUEST, $args['method']);
 		curl_setopt($c, CURLOPT_URL, $this->parseUrl . $args['url']);
-		
+
 		if($args['method'] == 'PUT' || $args['method'] == "POST"){
 			$postData = json_encode($args['payload']);
 			curl_setopt($c, CURLOPT_POSTFIELDS, $postData );
@@ -145,6 +149,9 @@ class parseRestClient{
 			if(isset($args['limit'])){
 				$postData['limit'] = $args['limit'];
 			}
+			if(isset($args['count'])){
+				$postData['count'] = $args['count'];
+			}
 			if(isset($args['skip'])){
 				$postData['skip'] = $args['skip'];
 			}
@@ -155,27 +162,39 @@ class parseRestClient{
 				}
 				curl_setopt($c, CURLOPT_URL, $this->parseUrl . $args['url'].'?'.$query);
 			}
-							
+			
+			if($this->enableDebug == true) {
+				echo "PostData: \n";
+				print_r($postData);
+				echo "Query:\n";
+				echo $query."\n";
+			}
+
 		}
 
 		$response = curl_exec($c);
 		$httpCode = curl_getinfo($c, CURLINFO_HTTP_CODE);
+	
+		
+		if($this->enableDebug == true) {
+			echo "Response: ".$response."\n";
+		}
 		
 		return array('code'=>$httpCode, 'response'=>$response);
 	}
 
-	
+
 	public function create($args){
 		$params = array(
 			'url' => $args['className'],
 			'method' => 'POST',
 			'payload' => $args['object']
 		);
-		
+
 		$return = $this->request($params);
 
 		return $this->checkResponse($return,'201');
-		
+
 	}	
 
 /*
@@ -194,9 +213,9 @@ class parseRestClient{
 			'url' => $args['className'].'/'.$args['objectId'],
 			'method' => 'GET'
 		);
-		
+
 		$return = $this->request($params);
-		
+
 		return $this->checkResponse($return,'200');
 	}	
 
@@ -218,9 +237,9 @@ class parseRestClient{
 			'method' => 'PUT',
 			'payload' => $args['object']
 		);
-		
+
 		$return = $this->request($params);
-		
+
 		return $this->checkResponse($return,'200');
 	}
 
@@ -248,9 +267,9 @@ class parseRestClient{
 		if(isset($args['query'])){
 			$params['query'] = $args['query'];
 		}
-		else{
+/*		else{
 			die('you should use the get method if you are not inluding a query');
-		}
+		}*/
 		if(isset($args['order'])){
 			$params['order'] = $args['order'];
 		}
@@ -260,11 +279,14 @@ class parseRestClient{
 		if(isset($args['skip'])){
 			$params['skip'] = $args['skip'];
 		}
-		
+		if(isset($args['count'])){
+			$params['count'] = $args['count'];
+		}
+
 		$return = $this->request($params);
-		
+
 		return $this->checkResponse($return,'200');
-		
+
 	}
 
 /*
@@ -283,9 +305,9 @@ class parseRestClient{
 			'url' => $args['className'].'/'.$args['objectId'],
 			'method' => 'DELETE'
 		);
-		
+
 		$return = $this->request($params);
-		
+
 		return $this->checkResponse($return,'200');
 	}	
 
